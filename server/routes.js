@@ -27,33 +27,17 @@ function asPriority(v) {
 }
 
 /**
- * 视图的 WHERE 片段。today 的日期在服务端生成（受控格式），直接内联。
- * all 不包含归档与回收站——它们各自有独立入口。
+ * 当前产品只保留两个视图：未完成的笔记、已完成的笔记。
+ * all 保留给导出/调试，语义是“所有未删除的笔记”。
  */
 const VIEWS = {
-  all: `e.archived_at IS NULL AND e.deleted_at IS NULL`,
-  inbox: `e.kind = 'todo' AND e.status = 'inbox' AND e.archived_at IS NULL AND e.deleted_at IS NULL`,
-  todo: `e.kind = 'todo' AND e.status IN ('inbox', 'doing') AND e.archived_at IS NULL AND e.deleted_at IS NULL`,
-  note: `e.kind = 'note' AND e.archived_at IS NULL AND e.deleted_at IS NULL`,
-  today: `e.kind = 'todo' AND e.status IN ('inbox', 'doing') AND e.due_at = '${localDate()}' AND e.archived_at IS NULL AND e.deleted_at IS NULL`,
-  done: `e.status = 'done' AND e.deleted_at IS NULL`,
-  archived: `e.archived_at IS NOT NULL AND e.deleted_at IS NULL`,
-  trash: `e.deleted_at IS NOT NULL`,
+  notes: `e.kind = 'note' AND e.status <> 'done' AND e.archived_at IS NULL AND e.deleted_at IS NULL`,
+  done: `e.kind = 'note' AND e.status = 'done' AND e.deleted_at IS NULL`,
+  all: `e.kind = 'note' AND e.archived_at IS NULL AND e.deleted_at IS NULL`,
 };
 
-/** 待办优先、置顶优先、有截止时间的靠前；历史视图按更新时间倒序。 */
-const ORDER_ACTIVE = `
-  ORDER BY e.pinned DESC,
-           CASE WHEN e.kind = 'todo' AND e.status IN ('inbox', 'doing') THEN 0 ELSE 1 END,
-           e.priority DESC,
-           CASE WHEN e.due_at IS NULL THEN 1 ELSE 0 END,
-           e.due_at ASC,
-           e.updated_at DESC`;
-const ORDER_HISTORY = `ORDER BY e.updated_at DESC`;
-
-function historyView(view) {
-  return view === 'done' || view === 'archived' || view === 'trash';
-}
+/** 置顶优先，其次按最近编辑时间。 */
+const ORDER_NOTES = `ORDER BY e.pinned DESC, e.updated_at DESC`;
 
 /** 批量补齐 tags，避免 N+1。 */
 function hydrate(rows) {
@@ -140,11 +124,10 @@ export default async function routes(app) {
     }
 
     const finalWhere = clauses.join(' AND ');
-    const order = historyView(view) ? ORDER_HISTORY : ORDER_ACTIVE;
     const n = Math.min(Math.max(Number(limit) || 200, 1), 1000);
 
     const items = db
-      .prepare(`SELECT e.* FROM entry e WHERE ${finalWhere} ${order} LIMIT ?`)
+      .prepare(`SELECT e.* FROM entry e WHERE ${finalWhere} ${ORDER_NOTES} LIMIT ?`)
       .all(...params, n);
 
     const total = db
@@ -158,17 +141,11 @@ export default async function routes(app) {
     const row = db
       .prepare(
         `SELECT
-           SUM(CASE WHEN archived_at IS NULL AND deleted_at IS NULL THEN 1 ELSE 0 END) AS "all",
-           SUM(CASE WHEN kind='todo' AND status='inbox' AND archived_at IS NULL AND deleted_at IS NULL THEN 1 ELSE 0 END) AS inbox,
-           SUM(CASE WHEN kind='todo' AND status IN ('inbox','doing') AND archived_at IS NULL AND deleted_at IS NULL THEN 1 ELSE 0 END) AS todo,
-           SUM(CASE WHEN kind='note' AND archived_at IS NULL AND deleted_at IS NULL THEN 1 ELSE 0 END) AS note,
-           SUM(CASE WHEN kind='todo' AND status IN ('inbox','doing') AND due_at = ? AND archived_at IS NULL AND deleted_at IS NULL THEN 1 ELSE 0 END) AS today,
-           SUM(CASE WHEN status='done' AND deleted_at IS NULL THEN 1 ELSE 0 END) AS done,
-           SUM(CASE WHEN archived_at IS NOT NULL AND deleted_at IS NULL THEN 1 ELSE 0 END) AS archived,
-           SUM(CASE WHEN deleted_at IS NOT NULL THEN 1 ELSE 0 END) AS trash
+           SUM(CASE WHEN kind='note' AND status <> 'done' AND archived_at IS NULL AND deleted_at IS NULL THEN 1 ELSE 0 END) AS notes,
+           SUM(CASE WHEN kind='note' AND status='done' AND deleted_at IS NULL THEN 1 ELSE 0 END) AS done
          FROM entry`,
       )
-      .get(localDate());
+      .get();
 
     return Object.fromEntries(Object.entries(row).map(([k, v]) => [k, Number(v ?? 0)]));
   });
@@ -187,7 +164,8 @@ export default async function routes(app) {
 
   app.post('/api/entries', async (request, reply) => {
     const body = request.body ?? {};
-    const kind = body.kind === 'note' ? 'note' : 'todo';
+    // 当前产品只有“笔记”；kind 字段保留以便未来扩展，默认即 note。
+    const kind = body.kind === 'todo' ? 'todo' : 'note';
     const content = asText(body.body);
     let title = asText(body.title, MAX_TITLE).trim();
 
@@ -198,8 +176,7 @@ export default async function routes(app) {
       return reply.code(400).send({ error: 'title 和 body 不能同时为空' });
     }
 
-    // 笔记没有“完成”语义，状态恒为 inbox。
-    const status = kind === 'note' ? 'inbox' : STATUSES.includes(body.status) ? body.status : 'inbox';
+    const status = STATUSES.includes(body.status) ? body.status : 'inbox';
     const ts = iso();
 
     const info = db
@@ -239,13 +216,7 @@ export default async function routes(app) {
     if ('archived' in body) set('archived_at', body.archived ? (current.archived_at ?? iso()) : null);
     if ('deleted' in body) set('deleted_at', body.deleted ? (current.deleted_at ?? iso()) : null);
 
-    // kind / status 的一致性兜底：笔记不能处于 doing/done/dropped。
-    const finalKind = 'kind' in body ? (body.kind === 'note' ? 'note' : 'todo') : current.kind;
-    const finalStatus = 'status' in body && STATUSES.includes(body.status) ? body.status : current.status;
-    if (finalKind === 'note' && finalStatus !== 'inbox') {
-      sets.push('status = ?');
-      params.push('inbox');
-    }
+    // 笔记同样可以标记完成，这里不再对 kind/status 做强制回退。
 
     set('updated_at', iso());
     db.prepare(`UPDATE entry SET ${sets.join(', ')} WHERE id = ?`).run(...params, id);

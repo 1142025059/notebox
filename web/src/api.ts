@@ -1,4 +1,4 @@
-import type { Entry, Stats, TagCount, ViewKey } from './types';
+import type { Entry, Kind, Stats, ViewKey } from './types';
 
 async function request<T>(input: string, init?: RequestInit): Promise<T> {
   const res = await fetch(input, init);
@@ -19,7 +19,6 @@ async function request<T>(input: string, init?: RequestInit): Promise<T> {
 export interface ListParams {
   view: ViewKey;
   q?: string;
-  tag?: string | null;
   limit?: number;
 }
 
@@ -30,15 +29,12 @@ export const api = {
       limit: String(params.limit ?? 200),
     });
     if (params.q) search.set('q', params.q);
-    if (params.tag) search.set('tag', params.tag);
     return request<{ items: Entry[]; total: number }>(`/api/entries?${search}`);
   },
 
   stats: () => request<Stats>('/api/stats'),
 
-  tags: () => request<TagCount[]>('/api/tags'),
-
-  create(payload: Partial<Entry> & { tags?: string[] }) {
+  create(payload: { title?: string; body?: string; kind?: Kind }) {
     return request<Entry>('/api/entries', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },

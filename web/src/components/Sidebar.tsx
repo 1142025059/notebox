@@ -1,19 +1,16 @@
 import { useRef } from 'react';
-import type { Stats, TagCount, ViewKey } from '../types';
+import type { Stats, ViewKey } from '../types';
 import { VIEW_LABELS } from '../types';
-import { IconDownload, IconUpload } from './icons';
+import { IconDownload, IconPlus, IconUpload } from './icons';
 
-const MAIN_VIEWS: ViewKey[] = ['all', 'inbox', 'todo', 'today'];
-const MORE_VIEWS: ViewKey[] = ['note', 'done', 'archived', 'trash'];
+const VIEWS: ViewKey[] = ['notes', 'done'];
 
 interface Props {
   view: ViewKey;
   stats: Stats;
-  tags: TagCount[];
-  activeTag: string | null;
   busy: boolean;
   onView: (view: ViewKey) => void;
-  onTag: (name: string | null) => void;
+  onCreate: () => void;
   onExport: () => void;
   onImport: (file: File) => void;
 }
@@ -21,11 +18,9 @@ interface Props {
 export default function Sidebar({
   view,
   stats,
-  tags,
-  activeTag,
   busy,
   onView,
-  onTag,
+  onCreate,
   onExport,
   onImport,
 }: Props) {
@@ -38,12 +33,17 @@ export default function Sidebar({
         <span className="brand-name">notebox</span>
       </div>
 
+      <button type="button" className="new-note" onClick={onCreate}>
+        <IconPlus size={15} />
+        新建笔记
+      </button>
+
       <nav className="nav">
-        {MAIN_VIEWS.map((item) => (
+        {VIEWS.map((item) => (
           <button
             key={item}
             type="button"
-            className={`nav-item ${view === item && !activeTag ? 'is-active' : ''}`}
+            className={`nav-item ${view === item ? 'is-active' : ''}`}
             onClick={() => onView(item)}
           >
             <span>{VIEW_LABELS[item]}</span>
@@ -52,44 +52,10 @@ export default function Sidebar({
         ))}
       </nav>
 
-      <div className="nav-section">
-        <div className="nav-title">其他</div>
-        <nav className="nav">
-          {MORE_VIEWS.map((item) => (
-            <button
-              key={item}
-              type="button"
-              className={`nav-item ${view === item && !activeTag ? 'is-active' : ''}`}
-              onClick={() => onView(item)}
-            >
-              <span>{VIEW_LABELS[item]}</span>
-              {stats[item] > 0 && <span className="nav-count">{stats[item]}</span>}
-            </button>
-          ))}
-        </nav>
-      </div>
-
-      {tags.length > 0 && (
-        <div className="nav-section">
-          <div className="nav-title">标签</div>
-          {tags.map((tag) => (
-            <button
-              key={tag.id}
-              type="button"
-              className={`tag-item ${activeTag === tag.name ? 'is-active' : ''}`}
-              onClick={() => onTag(activeTag === tag.name ? null : tag.name)}
-            >
-              <span className="tag-name">{tag.name}</span>
-              <span className="nav-count">{tag.count}</span>
-            </button>
-          ))}
-        </div>
-      )}
-
       <div className="sidebar-foot">
         <button type="button" className="ghost-btn" onClick={onExport} disabled={busy}>
           <IconDownload />
-          导出 JSON
+          导出
         </button>
         <button
           type="button"
@@ -98,7 +64,7 @@ export default function Sidebar({
           disabled={busy}
         >
           <IconUpload />
-          合并导入
+          导入
         </button>
         <input
           ref={fileRef}

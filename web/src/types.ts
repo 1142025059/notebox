@@ -1,15 +1,7 @@
-export type Kind = 'todo' | 'note';
+export type Kind = 'note' | 'todo';
 export type Status = 'inbox' | 'doing' | 'done' | 'dropped';
 
-export type ViewKey =
-  | 'all'
-  | 'inbox'
-  | 'todo'
-  | 'note'
-  | 'today'
-  | 'done'
-  | 'archived'
-  | 'trash';
+export type ViewKey = 'notes' | 'done';
 
 export interface Entry {
   id: number;
@@ -29,29 +21,11 @@ export interface Entry {
 }
 
 export interface Stats {
-  all: number;
-  inbox: number;
-  todo: number;
-  note: number;
-  today: number;
+  notes: number;
   done: number;
-  archived: number;
-  trash: number;
-}
-
-export interface TagCount {
-  id: number;
-  name: string;
-  count: number;
 }
 
 export const VIEW_LABELS: Record<ViewKey, string> = {
-  all: '全部',
-  inbox: '收件箱',
-  todo: '待办',
-  note: '笔记',
-  today: '今天到期',
-  done: '已完成',
-  archived: '已归档',
-  trash: '回收站',
+  notes: '全部笔记',
+  done: '已完成笔记',
 };

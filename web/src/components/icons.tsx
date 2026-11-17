@@ -33,25 +33,6 @@ export function IconClose({ size = 16, className }: IconProps) {
   );
 }
 
-export function IconPin({ size = 14, className }: IconProps) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" className={className} aria-hidden="true">
-      <path d="M9 4h6l-1 6 4 3v2H6v-2l4-3-1-6z" {...stroke} />
-      <path d="M12 15v6" {...stroke} />
-    </svg>
-  );
-}
-
-export function IconArchive({ size = 14, className }: IconProps) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" className={className} aria-hidden="true">
-      <rect x="3" y="4" width="18" height="5" rx="1.5" {...stroke} />
-      <path d="M5 9v9a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9" {...stroke} />
-      <path d="M10 13h4" {...stroke} />
-    </svg>
-  );
-}
-
 export function IconTrash({ size = 14, className }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" className={className} aria-hidden="true">
