@@ -1,0 +1,32 @@
+{
+  "name": "notebox",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "低摩擦的个人捕获与待办看板",
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "scripts": {
+    "dev": "concurrently -n api,web -c cyan,green \"npm:dev:api\" \"npm:dev:web\"",
+    "dev:api": "node --disable-warning=ExperimentalWarning --watch server/index.js",
+    "dev:web": "vite --config web/vite.config.ts",
+    "build": "vite build --config web/vite.config.ts",
+    "start": "node --disable-warning=ExperimentalWarning server/index.js",
+    "serve": "npm run build && npm start"
+  },
+  "dependencies": {
+    "@fastify/static": "^10.1.11",
+    "fastify": "^5.12.8",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.3.0",
+    "concurrently": "^10.0.7",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.8"
+  }
+}
