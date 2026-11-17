@@ -97,7 +97,7 @@ export default function EntryDetail({ entry, onClose, onCreate, onPatch, onDelet
 
   const remove = async () => {
     if (!local) return;
-    if (!window.confirm('删除后不会出现在列表里，确定删除这条笔记？')) return;
+    if (!window.confirm('删除后无法恢复，确定删除这条笔记？')) return;
     try {
       await onDelete(local.id);
     } catch {

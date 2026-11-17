@@ -73,18 +73,21 @@ const zero = await call('GET', '/api/entries?view=notes&q=不存在的词');
 check('无结果返回空数组', zero.body.items.length === 0);
 
 const listed = await call('GET', '/api/entries?view=notes');
-check('列表按最近编辑排序', listed.body.items[0].updated_at >= listed.body.items[1].updated_at);
+check('列表按创建顺序倒序', listed.body.items[0].id > listed.body.items[1].id);
 
 const deleted = await call('DELETE', `/api/entries/${created.body.id}`);
-check('软删除返回条目', deleted.status === 200 && deleted.body.deleted_at !== null);
+check('硬删除返回被删条目', deleted.status === 200 && deleted.body.id === created.body.id);
+
+const gone = await call('PATCH', `/api/entries/${created.body.id}`, { status: 'inbox' });
+check('删除后条目已不存在', gone.status === 404);
 
 const afterDelete = await call('GET', '/api/entries?view=notes');
-check('删除后不在全部笔记', afterDelete.body.total === 1);
+check('删除后只剩一条', afterDelete.body.total === 1);
 const doneAfterDelete = await call('GET', '/api/entries?view=done');
-check('删除后也不在已完成', doneAfterDelete.body.total === 0);
+check('已完成视图为空', doneAfterDelete.body.total === 0);
 
 const exported = await call('GET', '/api/export');
-check('导出包含全部条目', exported.body.entries.length === 2, exported.body.entries.length);
+check('导出只含存活条目', exported.body.entries.length === 1, exported.body.entries.length);
 check('导出带版本号', exported.body.version === 1);
 
 const imported = await call('POST', '/api/import', {

@@ -304,6 +304,15 @@ textarea {
   text-decoration-thickness: 1px;
 }
 
+.row-index {
+  flex: none;
+  width: 24px;
+  color: var(--ink-3);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
 .row-title {
   flex: 1;
   min-width: 0;

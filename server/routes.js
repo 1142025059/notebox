@@ -36,8 +36,8 @@ const VIEWS = {
   all: `e.kind = 'note' AND e.archived_at IS NULL AND e.deleted_at IS NULL`,
 };
 
-/** 置顶优先，其次按最近编辑时间。 */
-const ORDER_NOTES = `ORDER BY e.pinned DESC, e.updated_at DESC`;
+/** 新笔记在最上面；按创建顺序倒序，避免编辑一条就把它的序号顶走。 */
+const ORDER_NOTES = `ORDER BY e.pinned DESC, e.id DESC`;
 
 /** 批量补齐 tags，避免 N+1。 */
 function hydrate(rows) {
@@ -214,7 +214,6 @@ export default async function routes(app) {
     if ('remind_at' in body) set('remind_at', asDueDate(body.remind_at));
     if ('pinned' in body) set('pinned', body.pinned ? 1 : 0);
     if ('archived' in body) set('archived_at', body.archived ? (current.archived_at ?? iso()) : null);
-    if ('deleted' in body) set('deleted_at', body.deleted ? (current.deleted_at ?? iso()) : null);
 
     // 笔记同样可以标记完成，这里不再对 kind/status 做强制回退。
 
@@ -228,11 +227,15 @@ export default async function routes(app) {
 
   app.delete('/api/entries/:id', async (request, reply) => {
     const id = Number(request.params.id);
-    const row = db.prepare('SELECT id FROM entry WHERE id = ?').get(id);
-    if (!row) return reply.code(404).send({ error: '条目不存在' });
+    const entry = getEntry(id);
+    if (!entry) return reply.code(404).send({ error: '条目不存在' });
 
-    db.prepare('UPDATE entry SET deleted_at = ?, updated_at = ? WHERE id = ?').run(iso(), iso(), id);
-    return getEntry(id);
+    // 没有回收站，删除即物理删除；entry_tag 靠外键级联清理。
+    db.prepare('DELETE FROM entry WHERE id = ?').run(id);
+    // 顺手清掉不再被引用的标签，避免孤儿数据堆积。
+    db.prepare('DELETE FROM tag WHERE id NOT IN (SELECT tag_id FROM entry_tag)').run();
+
+    return entry;
   });
 
   app.get('/api/export', async (request, reply) => {
@@ -263,6 +266,9 @@ export default async function routes(app) {
 
       let count = 0;
       for (const item of entries) {
+        // 旧备份里可能残留回收站条目，既然没有回收站，直接跳过。
+        if (typeof item.deleted_at === 'string' && item.deleted_at) continue;
+
         const kind = item.kind === 'note' ? 'note' : 'todo';
         const title = asText(item.title, MAX_TITLE).trim() || '未命名';
         const content = asText(item.body);

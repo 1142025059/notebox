@@ -15,7 +15,7 @@ export default function EntryList({ items, loading, emptyHint, onSelect, onToggl
 
   return (
     <div className="list">
-      {items.map((entry) => {
+      {items.map((entry, index) => {
         const done = entry.status === 'done';
 
         return (
@@ -32,6 +32,7 @@ export default function EntryList({ items, loading, emptyHint, onSelect, onToggl
               }
             }}
           >
+            <span className="row-index">{index + 1}</span>
             <span className="row-title">{entry.title || '未命名笔记'}</span>
 
             <button
