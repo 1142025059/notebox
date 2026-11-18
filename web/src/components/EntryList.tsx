@@ -1,4 +1,5 @@
 import type { Entry } from '../types';
+import { formatCompact } from '../format';
 
 interface Props {
   items: Entry[];
@@ -17,6 +18,9 @@ export default function EntryList({ items, loading, emptyHint, onSelect, onToggl
     <div className="list">
       {items.map((entry, index) => {
         const done = entry.status === 'done';
+        // 精确到分钟，同一分钟内改过就只显示一行，避免两行同样的时刻。
+        const createdText = formatCompact(entry.created_at);
+        const updatedText = formatCompact(entry.updated_at);
 
         return (
           <div
@@ -34,6 +38,11 @@ export default function EntryList({ items, loading, emptyHint, onSelect, onToggl
           >
             <span className="row-index">{index + 1}</span>
             <span className="row-title">{entry.title || '未命名笔记'}</span>
+
+            <span className="row-time">
+              <span>创建 {createdText}</span>
+              {updatedText !== createdText && <span>修改 {updatedText}</span>}
+            </span>
 
             <button
               type="button"

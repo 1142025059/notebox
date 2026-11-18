@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Entry } from '../types';
+import { formatDateTime } from '../format';
 import { IconClose, IconTrash } from './icons';
 
 interface Props {
@@ -136,6 +137,14 @@ export default function EntryDetail({ entry, onClose, onCreate, onPatch, onDelet
           placeholder="写点什么…"
           onChange={(event) => update('body', event.target.value)}
         />
+
+        {local && (
+          <div className="detail-meta">
+            <span>创建 {formatDateTime(local.created_at)}</span>
+            <span aria-hidden="true">·</span>
+            <span>修改 {formatDateTime(local.updated_at)}</span>
+          </div>
+        )}
       </div>
 
       <div className="detail-foot">

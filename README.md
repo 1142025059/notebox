@@ -20,6 +20,8 @@
 3. 关闭面板后，笔记出现在列表中
 4. 点行右侧的圆圈打勾 → 从"全部笔记"消失，进入"已完成笔记"
 5. 在已完成里点实心勾 → 取消完成
+6. 每行右侧显示创建时间；修改过（且修改时刻与创建时刻不在同一分钟）的还会显示修改时间
+7. 打开某条笔记时，面板底部显示精确到秒的创建时间与修改时间
 
 新建时如果标题和正文都为空，不会产生空笔记。
 
@@ -72,7 +74,7 @@ npm run serve      # 构建前端并启动，访问 http://127.0.0.1:8787
 | GET | `/api/entries?view=&q=&limit=` | `view` 取 `notes`（未完成）或 `done` |
 | POST | `/api/entries` | 新建，默认 `kind=note`，`title` 为空时取 `body` 首行 |
 | PATCH | `/api/entries/:id` | 局部更新，标记完成传 `{ "status": "done" }` |
-| DELETE | `/api/entries/:id` | 软删除，之后不再出现在任何视图 |
+| DELETE | `/api/entries/:id` | 物理删除，无回收站 |
 | GET | `/api/stats` | `{ notes, done }` 两个计数 |
 | GET | `/api/export` | 导出全量 JSON |
 | POST | `/api/import` | `mode=merge` 合并导入 |
@@ -87,6 +89,7 @@ node --disable-warning=ExperimentalWarning scripts\smoke.mjs
 
 ## 已知边界
 
-- 删除是软删除，界面上没有回收站入口。当前要恢复只能直接改库，后续需要补一个回收站或改成硬删除
+- 删除是物理删除，没有回收站，删掉即无法恢复（有二次确认）
+- 时间按浏览器本地时区显示；库内存的是 UTC（`toISOString()`）
 - 正文是纯文本（Markdown 源码），没有渲染
 - 没有标签、到期提醒、多设备访问；服务默认只监听 `127.0.0.1`

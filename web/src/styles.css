@@ -322,6 +322,20 @@ textarea {
   white-space: nowrap;
 }
 
+.row-time {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  color: var(--ink-3);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.4;
+  text-align: right;
+  white-space: nowrap;
+}
+
 .row-check {
   display: grid;
   flex: none;
@@ -465,6 +479,16 @@ textarea {
 
 .body-input::placeholder {
   color: var(--ink-3);
+}
+
+.detail-meta {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: var(--ink-3);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
 }
 
 .detail-foot {

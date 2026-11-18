@@ -34,6 +34,8 @@ const created = await call('POST', '/api/entries', { title: '第一条笔记' })
 check('创建笔记返回 201', created.status === 201, created);
 check('默认就是笔记类型', created.body.kind === 'note');
 check('默认未完成', created.body.status === 'inbox');
+check('新建时记录创建与修改时间', Boolean(created.body.created_at && created.body.updated_at));
+check('新建时两个时间一致', created.body.created_at === created.body.updated_at);
 
 const notes = await call('GET', '/api/entries?view=notes');
 check('全部笔记里能看到', notes.body.items.length === 1 && notes.body.total === 1);
@@ -47,6 +49,11 @@ check('空内容被拒绝', empty.status === 400);
 const donePatch = await call('PATCH', `/api/entries/${created.body.id}`, { status: 'done' });
 check('笔记可以标记完成', donePatch.body.status === 'done');
 check('完成时间不影响其他字段', donePatch.body.title === '第一条笔记');
+check(
+  '修改后 updated_at 晚于 created_at',
+  new Date(donePatch.body.updated_at) > new Date(donePatch.body.created_at),
+  `${donePatch.body.created_at} -> ${donePatch.body.updated_at}`,
+);
 
 const notesAfterDone = await call('GET', '/api/entries?view=notes');
 check('完成后不在全部笔记展示', notesAfterDone.body.items.length === 1 && notesAfterDone.body.total === 1);
