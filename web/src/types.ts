@@ -1,4 +1,4 @@
-export type Kind = 'note' | 'todo';
+export type Kind = 'note' | 'todo' | 'knowledge';
 export type Status = 'inbox' | 'doing' | 'done' | 'dropped';
 
 export type ViewKey = 'notes' | 'done';
@@ -20,12 +20,10 @@ export interface Entry {
   tags: string[];
 }
 
-export interface Stats {
+/** 单个模块的两个计数：未完成、已完成。 */
+export interface ModuleStats {
   notes: number;
   done: number;
 }
 
-export const VIEW_LABELS: Record<ViewKey, string> = {
-  notes: '全部笔记',
-  done: '已完成笔记',
-};
+export type StatsMap = Record<Kind, ModuleStats>;

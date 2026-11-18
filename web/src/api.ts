@@ -1,4 +1,4 @@
-import type { Entry, Kind, Stats, ViewKey } from './types';
+import type { Entry, Kind, StatsMap, ViewKey } from './types';
 
 async function request<T>(input: string, init?: RequestInit): Promise<T> {
   const res = await fetch(input, init);
@@ -17,6 +17,7 @@ async function request<T>(input: string, init?: RequestInit): Promise<T> {
 }
 
 export interface ListParams {
+  kind: Kind;
   view: ViewKey;
   q?: string;
   limit?: number;
@@ -25,6 +26,7 @@ export interface ListParams {
 export const api = {
   list(params: ListParams) {
     const search = new URLSearchParams({
+      kind: params.kind,
       view: params.view,
       limit: String(params.limit ?? 200),
     });
@@ -32,7 +34,7 @@ export const api = {
     return request<{ items: Entry[]; total: number }>(`/api/entries?${search}`);
   },
 
-  stats: () => request<Stats>('/api/stats'),
+  stats: () => request<StatsMap>('/api/stats'),
 
   create(payload: { title?: string; body?: string; kind?: Kind }) {
     return request<Entry>('/api/entries', {

@@ -5,6 +5,13 @@ import { IconClose, IconTrash } from './icons';
 
 interface Props {
   entry: Entry | null;
+  copy: {
+    titlePlaceholder: string;
+    bodyPlaceholder: string;
+    itemLabel: string;
+    doneAction: string;
+    undoAction: string;
+  };
   onClose: () => void;
   onCreate: (payload: { title: string; body: string }) => Promise<Entry>;
   onPatch: (id: number, patch: Record<string, unknown>) => Promise<Entry>;
@@ -21,7 +28,7 @@ const toDraft = (entry: Entry | null): Draft => ({
   body: entry?.body ?? '',
 });
 
-export default function EntryDetail({ entry, onClose, onCreate, onPatch, onDelete }: Props) {
+export default function EntryDetail({ entry, copy, onClose, onCreate, onPatch, onDelete }: Props) {
   const [draft, setDraft] = useState<Draft>(() => toDraft(entry));
   const [local, setLocal] = useState<Entry | null>(entry);
   const [dirty, setDirty] = useState(false);
@@ -98,7 +105,7 @@ export default function EntryDetail({ entry, onClose, onCreate, onPatch, onDelet
 
   const remove = async () => {
     if (!local) return;
-    if (!window.confirm('删除后无法恢复，确定删除这条笔记？')) return;
+    if (!window.confirm('删除后无法恢复，确定删除？')) return;
     try {
       await onDelete(local.id);
     } catch {
@@ -107,9 +114,11 @@ export default function EntryDetail({ entry, onClose, onCreate, onPatch, onDelet
   };
 
   return (
-    <div className="detail is-open" role="dialog" aria-label="笔记详情">
+    <div className="detail is-open" role="dialog" aria-label="条目详情">
       <div className="detail-head">
-        <span className="detail-mode">{local ? '编辑笔记' : '新建笔记'}</span>
+        <span className="detail-mode">
+          {local ? `编辑${copy.itemLabel}` : `新建${copy.itemLabel}`}
+        </span>
         <span className="save-hint">{hint}</span>
         <button
           type="button"
@@ -127,14 +136,14 @@ export default function EntryDetail({ entry, onClose, onCreate, onPatch, onDelet
         <input
           className="title-input"
           value={draft.title}
-          placeholder="标题"
+          placeholder={copy.titlePlaceholder}
           autoFocus={!local}
           onChange={(event) => update('title', event.target.value)}
         />
         <textarea
           className="body-input"
           value={draft.body}
-          placeholder="写点什么…"
+          placeholder={copy.bodyPlaceholder}
           onChange={(event) => update('body', event.target.value)}
         />
 
@@ -154,7 +163,7 @@ export default function EntryDetail({ entry, onClose, onCreate, onPatch, onDelet
             className={`btn ${isDone ? '' : 'primary'}`}
             onClick={() => void toggleDone()}
           >
-            {isDone ? '取消完成' : '标记完成'}
+            {isDone ? copy.undoAction : copy.doneAction}
           </button>
         )}
 

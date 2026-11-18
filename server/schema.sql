@@ -1,10 +1,10 @@
--- notebox 数据模型：entry 统一承载“待办”与“笔记”，kind 区分。
--- 第一版刻意不引入 FTS5：个人记事本量级（<1e5 行）下 instr() 全表扫描是毫秒级，
+-- notebox 数据模型：entry 统一承载「笔记 / 任务 / 知识」，kind 区分模块。
+-- 第一版刻意不引入 FTS5：个人量级（<1e5 行）下 instr() 全表扫描是毫秒级，
 -- 且 FTS5 的 unicode61 分词对中文不友好（整句会被当成单个 token）。
 
 CREATE TABLE IF NOT EXISTS entry (
   id          INTEGER PRIMARY KEY AUTOINCREMENT,
-  kind        TEXT    NOT NULL DEFAULT 'todo' CHECK (kind IN ('todo', 'note')),
+  kind        TEXT    NOT NULL DEFAULT 'note' CHECK (kind IN ('note', 'todo', 'knowledge')),
   title       TEXT    NOT NULL DEFAULT '',
   body        TEXT    NOT NULL DEFAULT '',
   status      TEXT    NOT NULL DEFAULT 'inbox' CHECK (status IN ('inbox', 'doing', 'done', 'dropped')),

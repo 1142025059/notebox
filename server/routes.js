@@ -1,10 +1,13 @@
 import db, { DB_PATH } from './db.js';
 
 const STATUSES = ['inbox', 'doing', 'done', 'dropped'];
+const KINDS = ['note', 'todo', 'knowledge'];
 const MAX_TITLE = 200;
 const MAX_BODY = 200000;
 
 const iso = () => new Date().toISOString();
+
+const asKind = (value, fallback = 'note') => (KINDS.includes(value) ? value : fallback);
 
 /** 本地日期（YYYY-MM-DD）。due_at 只存日期，避免时区把“今天”算错。 */
 function localDate(d = new Date()) {
@@ -27,13 +30,14 @@ function asPriority(v) {
 }
 
 /**
- * 当前产品只保留两个视图：未完成的笔记、已完成的笔记。
- * all 保留给导出/调试，语义是“所有未删除的笔记”。
+ * 三个模块共用同一套状态语义：notes = 未完成，done = 已完成。
+ * 具体模块由查询参数 kind 决定，视图条件本身不再绑定 kind。
+ * all 保留给导出/调试。
  */
 const VIEWS = {
-  notes: `e.kind = 'note' AND e.status <> 'done' AND e.archived_at IS NULL AND e.deleted_at IS NULL`,
-  done: `e.kind = 'note' AND e.status = 'done' AND e.deleted_at IS NULL`,
-  all: `e.kind = 'note' AND e.archived_at IS NULL AND e.deleted_at IS NULL`,
+  notes: `e.status <> 'done' AND e.archived_at IS NULL AND e.deleted_at IS NULL`,
+  done: `e.status = 'done' AND e.deleted_at IS NULL`,
+  all: `e.archived_at IS NULL AND e.deleted_at IS NULL`,
 };
 
 /** 新笔记在最上面；按创建顺序倒序，避免编辑一条就把它的序号顶走。 */
@@ -102,10 +106,10 @@ export default async function routes(app) {
   app.get('/api/health', async () => ({ ok: true, db: DB_PATH }));
 
   app.get('/api/entries', async (request) => {
-    const { view = 'all', q = '', tag = '', limit = '200' } = request.query ?? {};
+    const { view = 'all', kind = 'note', q = '', tag = '', limit = '200' } = request.query ?? {};
     const where = VIEWS[view] ?? VIEWS.all;
-    const params = [];
-    const clauses = [where];
+    const params = [asKind(kind)];
+    const clauses = ['e.kind = ?', where];
 
     const query = String(q).trim();
     if (query) {
@@ -138,16 +142,24 @@ export default async function routes(app) {
   });
 
   app.get('/api/stats', async () => {
-    const row = db
+    // 每个模块都只有两个计数：未完成、已完成。一次查询返回三个模块，首页直接用。
+    const rows = db
       .prepare(
-        `SELECT
-           SUM(CASE WHEN kind='note' AND status <> 'done' AND archived_at IS NULL AND deleted_at IS NULL THEN 1 ELSE 0 END) AS notes,
-           SUM(CASE WHEN kind='note' AND status='done' AND deleted_at IS NULL THEN 1 ELSE 0 END) AS done
-         FROM entry`,
+        `SELECT kind,
+                SUM(CASE WHEN status <> 'done' AND archived_at IS NULL AND deleted_at IS NULL THEN 1 ELSE 0 END) AS notes,
+                SUM(CASE WHEN status = 'done' AND deleted_at IS NULL THEN 1 ELSE 0 END) AS done
+           FROM entry
+          WHERE kind IN ('note', 'todo', 'knowledge')
+          GROUP BY kind`,
       )
-      .get();
+      .all();
 
-    return Object.fromEntries(Object.entries(row).map(([k, v]) => [k, Number(v ?? 0)]));
+    const out = {};
+    for (const kind of KINDS) out[kind] = { notes: 0, done: 0 };
+    for (const row of rows) {
+      out[row.kind] = { notes: Number(row.notes ?? 0), done: Number(row.done ?? 0) };
+    }
+    return out;
   });
 
   app.get('/api/tags', async () => {
@@ -164,8 +176,7 @@ export default async function routes(app) {
 
   app.post('/api/entries', async (request, reply) => {
     const body = request.body ?? {};
-    // 当前产品只有“笔记”；kind 字段保留以便未来扩展，默认即 note。
-    const kind = body.kind === 'todo' ? 'todo' : 'note';
+    const kind = asKind(body.kind);
     const content = asText(body.body);
     let title = asText(body.title, MAX_TITLE).trim();
 
@@ -207,7 +218,7 @@ export default async function routes(app) {
 
     if ('title' in body) set('title', asText(body.title, MAX_TITLE).trim());
     if ('body' in body) set('body', asText(body.body));
-    if ('kind' in body) set('kind', body.kind === 'note' ? 'note' : 'todo');
+    if ('kind' in body && KINDS.includes(body.kind)) set('kind', body.kind);
     if ('status' in body && STATUSES.includes(body.status)) set('status', body.status);
     if ('priority' in body) set('priority', asPriority(body.priority));
     if ('due_at' in body) set('due_at', asDueDate(body.due_at));
@@ -269,10 +280,10 @@ export default async function routes(app) {
         // 旧备份里可能残留回收站条目，既然没有回收站，直接跳过。
         if (typeof item.deleted_at === 'string' && item.deleted_at) continue;
 
-        const kind = item.kind === 'note' ? 'note' : 'todo';
+        const kind = asKind(item.kind);
         const title = asText(item.title, MAX_TITLE).trim() || '未命名';
         const content = asText(item.body);
-        const status = kind === 'note' ? 'inbox' : STATUSES.includes(item.status) ? item.status : 'inbox';
+        const status = STATUSES.includes(item.status) ? item.status : 'inbox';
         const createdAt = typeof item.created_at === 'string' ? item.created_at : iso();
         const updatedAt = typeof item.updated_at === 'string' ? item.updated_at : createdAt;
 

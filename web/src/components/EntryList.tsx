@@ -5,11 +5,21 @@ interface Props {
   items: Entry[];
   loading: boolean;
   emptyHint: string;
+  doneLabel: string;
+  undoLabel: string;
   onSelect: (entry: Entry) => void;
   onToggle: (entry: Entry) => void;
 }
 
-export default function EntryList({ items, loading, emptyHint, onSelect, onToggle }: Props) {
+export default function EntryList({
+  items,
+  loading,
+  emptyHint,
+  doneLabel,
+  undoLabel,
+  onSelect,
+  onToggle,
+}: Props) {
   if (items.length === 0) {
     return <div className="empty">{loading ? '加载中…' : emptyHint}</div>;
   }
@@ -47,8 +57,8 @@ export default function EntryList({ items, loading, emptyHint, onSelect, onToggl
             <button
               type="button"
               className={`row-check ${done ? 'is-done' : ''}`}
-              aria-label={done ? '取消完成' : '标记为已完成'}
-              title={done ? '取消完成' : '标记为已完成'}
+              aria-label={done ? undoLabel : doneLabel}
+              title={done ? undoLabel : doneLabel}
               onClick={(event) => {
                 event.stopPropagation();
                 onToggle(entry);

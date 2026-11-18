@@ -1,14 +1,16 @@
 import { useRef } from 'react';
-import type { Stats, ViewKey } from '../types';
-import { VIEW_LABELS } from '../types';
-import { IconDownload, IconPlus, IconUpload } from './icons';
+import type { ModuleStats, ViewKey } from '../types';
+import type { ModuleDef } from '../modules';
+import { IconArrowLeft, IconDownload, IconPlus, IconUpload } from './icons';
 
 const VIEWS: ViewKey[] = ['notes', 'done'];
 
 interface Props {
+  module: ModuleDef;
   view: ViewKey;
-  stats: Stats;
+  stats: ModuleStats;
   busy: boolean;
+  onBack: () => void;
   onView: (view: ViewKey) => void;
   onCreate: () => void;
   onExport: () => void;
@@ -16,9 +18,11 @@ interface Props {
 }
 
 export default function Sidebar({
+  module,
   view,
   stats,
   busy,
+  onBack,
   onView,
   onCreate,
   onExport,
@@ -28,14 +32,22 @@ export default function Sidebar({
 
   return (
     <aside className="sidebar">
-      <div className="brand">
-        <span className="brand-mark" />
-        <span className="brand-name">notebox</span>
+      <div className="sidebar-head">
+        <button
+          type="button"
+          className="back-btn"
+          onClick={onBack}
+          title="返回模块首页"
+          aria-label="返回模块首页"
+        >
+          <IconArrowLeft />
+        </button>
+        <span className="sidebar-module">{module.name}</span>
       </div>
 
       <button type="button" className="new-note" onClick={onCreate}>
         <IconPlus size={15} />
-        新建笔记
+        {module.newLabel}
       </button>
 
       <nav className="nav">
@@ -46,7 +58,7 @@ export default function Sidebar({
             className={`nav-item ${view === item ? 'is-active' : ''}`}
             onClick={() => onView(item)}
           >
-            <span>{VIEW_LABELS[item]}</span>
+            <span>{module.listTitle[item]}</span>
             {stats[item] > 0 && <span className="nav-count">{stats[item]}</span>}
           </button>
         ))}

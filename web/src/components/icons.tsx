@@ -56,3 +56,11 @@ export function IconUpload({ size = 14, className }: IconProps) {
     </svg>
   );
 }
+
+export function IconArrowLeft({ size = 16, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" className={className} aria-hidden="true">
+      <path d="M15 5l-7 7 7 7" {...stroke} />
+    </svg>
+  );
+}

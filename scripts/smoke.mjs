@@ -63,8 +63,8 @@ const doneList = await call('GET', '/api/entries?view=done');
 check('已完成视图出现', doneList.body.items.length === 1 && doneList.body.items[0].id === created.body.id);
 
 const stats = await call('GET', '/api/stats');
-check('stats 未完成计数为 1', stats.body.notes === 1, stats.body);
-check('stats 已完成计数为 1', stats.body.done === 1, stats.body);
+check('笔记模块未完成计数为 1', stats.body.note?.notes === 1, stats.body);
+check('笔记模块已完成计数为 1', stats.body.note?.done === 1, stats.body);
 
 const reopen = await call('PATCH', `/api/entries/${created.body.id}`, { status: 'inbox' });
 check('取消完成成功', reopen.body.status === 'inbox');
@@ -102,6 +102,34 @@ const imported = await call('POST', '/api/import', {
   entries: exported.body.entries,
 });
 check('合并导入跳过重复', imported.body.imported === 0, imported.body);
+
+// 三个模块共用一套逻辑，但数据必须彼此隔离
+const task = await call('POST', '/api/entries', { title: '部署新版本', kind: 'todo' });
+check('可以创建任务', task.status === 201 && task.body.kind === 'todo');
+
+const knowledge = await call('POST', '/api/entries', {
+  title: '为什么 SQLite 用 WAL',
+  body: '读写并发更好',
+  kind: 'knowledge',
+});
+check('可以创建知识', knowledge.status === 201 && knowledge.body.kind === 'knowledge');
+
+const taskNotes = await call('GET', '/api/entries?view=notes&kind=todo');
+check('任务视图只返回任务', taskNotes.body.total === 1 && taskNotes.body.items.every((e) => e.kind === 'todo'));
+
+const noteOnly = await call('GET', '/api/entries?view=notes&kind=note');
+check('笔记视图不含任务和知识', noteOnly.body.items.every((e) => e.kind === 'note'));
+
+const knowledgeDone = await call('PATCH', `/api/entries/${knowledge.body.id}`, { status: 'done' });
+check('知识也可以标记完成', knowledgeDone.body.status === 'done');
+
+const crossStats = await call('GET', '/api/stats');
+check('任务计数独立', crossStats.body.todo?.notes === 1 && crossStats.body.todo?.done === 0, crossStats.body);
+check(
+  '知识计数独立',
+  crossStats.body.knowledge?.notes === 0 && crossStats.body.knowledge?.done === 1,
+  crossStats.body,
+);
 
 const missing = await call('PATCH', '/api/entries/99999', { status: 'done' });
 check('不存在的条目返回 404', missing.status === 404);

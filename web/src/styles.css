@@ -44,11 +44,148 @@ textarea {
   font-family: inherit;
 }
 
+/* ---------- 模块总览 ---------- */
+
+.home {
+  display: flex;
+  height: 100%;
+  padding: 56px 32px 40px;
+  overflow-y: auto;
+  background: var(--bg);
+}
+
+.home-inner {
+  width: 100%;
+  max-width: 880px;
+  margin: 0 auto;
+}
+
+.home-head {
+  margin-bottom: 26px;
+}
+
+.home-brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.home-title {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.home-sub {
+  margin: 8px 0 0;
+  color: var(--ink-3);
+  font-size: 13px;
+}
+
+.module-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 14px;
+}
+
+.module-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--panel);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.module-card:hover {
+  border-color: var(--card-accent);
+  box-shadow: 0 8px 24px rgba(28, 28, 24, 0.07);
+  transform: translateY(-2px);
+}
+
+.module-card[data-kind='note'] {
+  --card-accent: #256b52;
+}
+
+.module-card[data-kind='todo'] {
+  --card-accent: #a5702a;
+}
+
+.module-card[data-kind='knowledge'] {
+  --card-accent: #3a5f86;
+}
+
+.module-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.module-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 4px;
+  background: var(--card-accent);
+}
+
+.module-name {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.module-arrow {
+  margin-left: auto;
+  color: var(--ink-3);
+  font-size: 12px;
+  transition: color 0.15s ease;
+}
+
+.module-card:hover .module-arrow {
+  color: var(--card-accent);
+}
+
+.module-tagline {
+  color: var(--ink-2);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.module-stats {
+  color: var(--ink-3);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.home-foot {
+  margin-top: 26px;
+  color: var(--ink-3);
+  font-size: 11px;
+}
+
 .app {
   display: grid;
   grid-template-columns: 236px minmax(0, 1fr);
   height: 100%;
   overflow: hidden;
+}
+
+/* 每个模块一个主色，按钮、选中态、勾选圈都跟着变 */
+
+.app[data-kind='todo'] {
+  --accent: #a5702a;
+  --accent-ink: #8a5c22;
+  --accent-soft: #f4ebdd;
+}
+
+.app[data-kind='knowledge'] {
+  --accent: #3a5f86;
+  --accent-ink: #2f4f6f;
+  --accent-soft: #e8eef6;
 }
 
 /* ---------- 侧栏 ---------- */
@@ -63,13 +200,6 @@ textarea {
   overflow-y: auto;
 }
 
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  padding: 2px 8px 16px;
-}
-
 .brand-mark {
   width: 22px;
   height: 22px;
@@ -78,7 +208,34 @@ textarea {
   flex: none;
 }
 
-.brand-name {
+.sidebar-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 2px 16px;
+}
+
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.back-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--ink);
+}
+
+.sidebar-module {
   font-size: 14px;
   font-weight: 600;
   letter-spacing: 0.02em;
