@@ -51,6 +51,17 @@
 
 ## 运行
 
+### 方式一：便携版（推荐给普通用户）
+
+从 GitHub Releases 下载 `notebox-portable.zip`，解压后双击 `notebox.vbs`。
+
+- 自带 Windows 版 Node 运行时，目标机器不需要安装 Node，也不需要联网
+- 窗口是 Edge / Chrome 的 app 模式（无地址栏、无标签页），启动即最大化
+- 关闭窗口时服务自动退出，不驻留后台进程
+- 数据保存在包内 `data/notebox.db`，整个文件夹拷走即可迁移
+
+### 方式二：源码运行（开发）
+
 要求 Node >= 22.5（`node:sqlite`）。
 
 ```powershell
@@ -58,11 +69,14 @@ npm install
 npm run dev        # API :8787 + Vite :5173
 ```
 
-日常使用：
+### 方式三：按客户端方式启动
 
 ```powershell
-npm run serve      # 构建前端并启动，访问 http://127.0.0.1:8787
+npm run build
+node scripts\launcher.mjs
 ```
+
+启动器会拉起服务并打开独立窗口，关闭窗口时自动结束服务进程。Windows 上也可以直接双击 `notebox.vbs`。
 
 或运行 `scripts\start.ps1`（检查依赖与构建后自动打开浏览器）。
 
