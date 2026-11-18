@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Entry } from '../types';
 import { formatDateTime } from '../format';
+import { renderMarkdown } from '../markdown';
 import { IconClose, IconTrash } from './icons';
 
 interface Props {
@@ -91,6 +92,7 @@ export default function EntryDetail({ entry, copy, onClose, onCreate, onPatch, o
 
   const isDone = local?.status === 'done';
   const hint = saving ? '保存中…' : dirty ? '未保存' : justSaved ? '已保存' : '';
+  const preview = useMemo(() => renderMarkdown(draft.body), [draft.body]);
 
   const toggleDone = async () => {
     if (!local) return;
@@ -140,12 +142,26 @@ export default function EntryDetail({ entry, copy, onClose, onCreate, onPatch, o
           autoFocus={!local}
           onChange={(event) => update('title', event.target.value)}
         />
-        <textarea
-          className="body-input"
-          value={draft.body}
-          placeholder={copy.bodyPlaceholder}
-          onChange={(event) => update('body', event.target.value)}
-        />
+        <div className="editor-panes">
+          <textarea
+            className="body-input"
+            value={draft.body}
+            placeholder={copy.bodyPlaceholder}
+            onChange={(event) => update('body', event.target.value)}
+          />
+
+          <div className="preview">
+            {draft.body.trim() ? (
+              <div
+                className="markdown-body"
+                // markdown-it 已关闭 raw HTML，这里的片段由受控渲染器生成
+                dangerouslySetInnerHTML={{ __html: preview }}
+              />
+            ) : (
+              <div className="preview-empty">这里会实时显示 Markdown 效果</div>
+            )}
+          </div>
+        </div>
 
         {local && (
           <div className="detail-meta">
