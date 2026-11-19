@@ -7,13 +7,17 @@ if not exist "%EDGE%" set "EDGE=C:\Program Files\Microsoft\Edge\Application\msed
 if not exist "%EDGE%" set "EDGE=C:\Program Files\Google\Chrome\Application\chrome.exe"
 if not exist "%EDGE%" set "EDGE=C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"
 
-if not exist "%~dp0node.exe" (
-  echo Cannot find node.exe. Please extract the whole zip archive first.
+set "NODE=%~dp0node.exe"
+if not exist "%NODE%" set "NODE=%ProgramFiles%\nodejs\node.exe"
+if not exist "%NODE%" set "NODE=C:\nvm4w\nodejs\node.exe"
+
+if not exist "%NODE%" (
+  echo Cannot find Node.js. Extract the portable zip ^(it bundles node.exe^), or install Node.js for a source checkout.
   pause
   exit /b 1
 )
 
-start "" /b "%~dp0node.exe" "--disable-warning=ExperimentalWarning" "%~dp0scripts\launcher.mjs"
+start "" /b "%NODE%" "--disable-warning=ExperimentalWarning" "%~dp0scripts\launcher.mjs"
 
 rem Give the server a moment, then open the window from this console process.
 rem Starting the browser from wscript delays the window to about 8 seconds.

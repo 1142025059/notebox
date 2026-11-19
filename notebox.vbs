@@ -17,8 +17,19 @@ baseDir = fso.GetParentFolderName(WScript.ScriptFullName)
 nodeExe = baseDir & "\node.exe"
 entry = baseDir & "\scripts\launcher.mjs"
 
+' Portable packages ship node.exe next to this script. A source checkout has no
+' bundled runtime, so fall back to a locally installed Node.js.
 If Not fso.FileExists(nodeExe) Then
-  MsgBox "Cannot find node.exe. Please extract the whole zip archive first, then run this file:" & vbCrLf & vbCrLf & nodeExe, 16, "notebox"
+  nodeExe = sh.ExpandEnvironmentStrings("%ProgramFiles%") & "\nodejs\node.exe"
+End If
+If Not fso.FileExists(nodeExe) Then
+  nodeExe = "C:\nvm4w\nodejs\node.exe"
+End If
+If Not fso.FileExists(nodeExe) Then
+  nodeExe = sh.ExpandEnvironmentStrings("%ProgramFiles(x86)%") & "\nodejs\node.exe"
+End If
+If Not fso.FileExists(nodeExe) Then
+  MsgBox "Cannot find Node.js. Extract the portable zip (it bundles node.exe), or install Node.js to use a source checkout.", 16, "notebox"
   WScript.Quit 1
 End If
 
