@@ -1,24 +1,24 @@
-' notebox launcher: start the server and open the app window.
+' notebox launcher (portable package).
 ' Closing the window stops the server and releases all resources.
-' This file is used inside the portable package, so every path is relative to
-' its own folder. Do not hard-code absolute paths here.
+' Keep this file pure ASCII: VBScript reads .vbs as ANSI, so non-ASCII
+' characters break the string literals and the script fails to compile.
 Option Explicit
 
-Dim fso, sh, base, nodeExe, entry, q
+Dim fso, sh, baseDir, nodeExe, entry, q
 Set fso = CreateObject("Scripting.FileSystemObject")
 Set sh = CreateObject("WScript.Shell")
 
-base = fso.GetParentFolderName(WScript.ScriptFullName)
-nodeExe = base & "\node.exe"
-entry = base & "\scripts\launcher.mjs"
+baseDir = fso.GetParentFolderName(WScript.ScriptFullName)
+nodeExe = baseDir & "\node.exe"
+entry = baseDir & "\scripts\launcher.mjs"
 
 If Not fso.FileExists(nodeExe) Then
-  MsgBox "找不到 node.exe，请确认压缩包已完整解压：" & vbCrLf & nodeExe, 16, "notebox"
+  MsgBox "Cannot find node.exe. Please extract the whole zip archive first, then run this file:" & vbCrLf & vbCrLf & nodeExe, 16, "notebox"
   WScript.Quit 1
 End If
 
 If Not fso.FileExists(entry) Then
-  MsgBox "找不到启动器 launcher.mjs：" & vbCrLf & entry, 16, "notebox"
+  MsgBox "Cannot find the launcher script:" & vbCrLf & vbCrLf & entry, 16, "notebox"
   WScript.Quit 1
 End If
 
