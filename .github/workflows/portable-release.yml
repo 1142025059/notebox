@@ -42,8 +42,9 @@ jobs:
           Copy-Item 'server' (Join-Path $root 'server') -Recurse
           Copy-Item 'web\dist\*' (Join-Path $root 'web\dist') -Recurse
           Copy-Item 'scripts\launcher.mjs' (Join-Path $root 'scripts\launcher.mjs')
-          Copy-Item 'scripts\activate-window.ps1' (Join-Path $root 'scripts\activate-window.ps1')
+          Copy-Item 'scripts\watch-window.ps1' (Join-Path $root 'scripts\watch-window.ps1')
           Copy-Item 'notebox.vbs' (Join-Path $root 'notebox.vbs')
+          Copy-Item 'notebox.cmd' (Join-Path $root 'notebox.cmd')
           Copy-Item 'README-PORTABLE.txt' (Join-Path $root 'README.txt')
 
           $pkg = '{"name":"notebox","version":"0.1.0","private":true,"type":"module","dependencies":{"@fastify/static":"^10.1.11","fastify":"^5.12.8"}}'
@@ -64,7 +65,7 @@ jobs:
           $tag = '${{ inputs.tag }}'
           gh release view $tag 2>$null | Out-Null
           if ($LASTEXITCODE -ne 0) {
-            gh release create $tag notebox-portable.zip --title "notebox $tag" --notes "Windows portable build: unzip and double-click notebox.vbs"
+            gh release create $tag notebox-portable.zip --title "notebox $tag" --notes "Windows portable build: unzip, then double-click notebox.cmd (a desktop shortcut is created on first run)"
           }
           else {
             gh release upload $tag notebox-portable.zip --clobber

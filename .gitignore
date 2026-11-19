@@ -9,3 +9,5 @@ data/backup-*/
 .DS_Store
 Thumbs.db
 release/
+profile/
+notebox-portable.zip
